@@ -1,0 +1,56 @@
+version: '{build}'
+clone_folder: c:\projects\pragma
+image:
+- Visual Studio 2019
+configuration:
+- Release
+#- Debug
+
+matrix:
+  fast_finish: true
+  
+environment:
+  VULKAN_SDK: "c:\\VulkanSDK\\1.1.114.0\\"
+
+init:
+- set arch=
+- if "%arch%"=="Win64" ( set arch= Win64)
+- echo %arch%
+- echo %APPVEYOR_BUILD_WORKER_IMAGE%
+- if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019" ( set generator="Visual Studio 16 2019%arch%" )
+- echo %generator%
+
+before_build:
+- cmd: |-
+    git submodule update --init --recursive --jobs=5
+# download GLM https://glm.g-truc.net
+- cmd: |-
+    cd c:\projects\
+    curl -LJO https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip
+    7z x glm-0.9.9.8.zip
+    dir
+- cmd: |-
+    cd c:\projects\
+    curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.1.114.0/windows/VulkanSDK-1.1.114.0-Installer.exe
+    VulkanSDK.exe /S
+    cd c:\VulkanSDK\1.1.114.0\
+    dir
+- cmd: |-
+    cd c:\projects\pragma
+    mkdir build
+    cd build
+    cmake --version
+    cmake .. -G %generator% -DDEPENDENCY_GLM_INCLUDE=c:\projects\glm
+- cmd: |-
+    cd c:\projects\pragma\third_party_libs
+    mkdir vulkan
+    cd vulkan
+    git clone https://github.com/KhronosGroup/SPIRV-Tools.git spirv-tools
+    cd spirv-tools
+    git checkout 61dfd8492b6e324f684863ecbd79c299a06e6517
+    
+
+build:
+  project: c:\projects\mathutil\build\pragma.sln
+  verbosity: normal
+  parallel: true
