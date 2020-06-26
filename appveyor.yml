@@ -10,7 +10,12 @@ matrix:
   fast_finish: true
   
 environment:
-  VULKAN_SDK: "c:\\VulkanSDK\\1.1.114.0\\"
+  VULKAN_SDK: "c:\\projects\\pragma\\third_party_libs\\vulkan"
+  PYTHON: "C:\\Python37-x64"
+  PYTHON_EXECUTABLE: c:\\Python37-x64\\python.exe
+  PYTHON_HOME: "C:\\Python37-x64"
+  PYTHON_VERSION: '3.7.5'
+  PYTHON_ARCH: '64'
 
 init:
 - set arch=
@@ -32,23 +37,19 @@ before_build:
 - cmd: |-
     cd c:\projects\
     curl -L --silent --show-error --output VulkanSDK.exe https://sdk.lunarg.com/sdk/download/1.1.114.0/windows/VulkanSDK-1.1.114.0-Installer.exe
-    VulkanSDK.exe /S
-    cd c:\VulkanSDK\1.1.114.0\
+    VulkanSDK.exe /S /D=c:\projects\pragma\third_party_libs\vulkan
+    cd c:\projects\pragma\third_party_libs\vulkan
     dir
+    cd spirv-tools
+    dir
+- ps: >-
+    (Get-Content CMakeLists.txt) -replace 'find_host_package(PythonInterp 3 REQUIRED)', 'find_host_package(Python3 REQUIRED)' | Set-Content CMakeLists.txt
 - cmd: |-
     cd c:\projects\pragma
     mkdir build
     cd build
     cmake --version
     cmake .. -G %generator% -DDEPENDENCY_GLM_INCLUDE=c:\projects\glm
-- cmd: |-
-    cd c:\projects\pragma\third_party_libs
-    mkdir vulkan
-    cd vulkan
-    git clone https://github.com/KhronosGroup/SPIRV-Tools.git spirv-tools
-    cd spirv-tools
-    git checkout 61dfd8492b6e324f684863ecbd79c299a06e6517
-    
 
 build:
   project: c:\projects\mathutil\build\pragma.sln
